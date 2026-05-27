@@ -290,13 +290,10 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
       fontWeight: "400",
       fontWeightBold: "700",
       macOptionIsMeta: true,
-      // Hold Option (Alt on Linux/Windows) to force native text selection
-      // even when the inner Hermes TUI has enabled xterm mouse-events
-      // mode (CSI ?1000h family). Without this, click-and-drag in the
-      // chat canvas selects nothing and Cmd+C falls back to copying the
-      // entire visible buffer, which is rarely what the user wants.
-      // See #25720.
-      macOptionClickForcesSelection: true,
+      // Browser-embedded chat runs with HERMES_TUI_DISABLE_MOUSE=1,
+      // so the TUI never enables xterm mouse tracking.  Plain
+      // click-and-drag text selection works without holding Option.
+      macOptionClickForcesSelection: false,
       // Right-click selects the word under the pointer. xterm.js default
       // is false; enabling it gives users a single-action selection
       // path on top of the modifier-based bypass above.
