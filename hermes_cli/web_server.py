@@ -3541,12 +3541,7 @@ def _resolve_chat_argv(
     # makes browser-side transcript scrolling feel broken. Keep the terminal
     # build unchanged for native CLI usage; only disable mouse tracking for
     # the dashboard PTY path.
-    # Force mouse tracking OFF for browser-embedded chat.
-    # Use direct assignment (not setdefault) because the parent shell may
-    # have HERMES_TUI_MOUSE_TRACKING=wheel from a prior session, and
-    # os.environ.copy() + setdefault would silently preserve it.
-    env["HERMES_TUI_DISABLE_MOUSE"] = "1"
-    env.pop("HERMES_TUI_MOUSE_TRACKING", None)
+    env.setdefault("HERMES_TUI_DISABLE_MOUSE", "1")
     env.setdefault("HERMES_TUI_INLINE", "1")
 
     if resume:
@@ -3649,8 +3644,6 @@ async def pty_ws(ws: WebSocket) -> None:
 
     # --- spawn PTY ------------------------------------------------------
     resume = ws.query_params.get("resume") or None
-    # Auto-resume the most recent session when no explicit resume is given.
-    # This prevents losing conversation history on Desktop App restart.
     if not resume:
         resume = _resolve_last_session()
     channel = _channel_or_close_code(ws)

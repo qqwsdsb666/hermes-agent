@@ -1,6 +1,6 @@
 import { AlternateScreen, Box, NoSelect, ScrollBox, Text } from '@hermes/ink'
 import { useStore } from '@nanostores/react'
-import { Fragment, memo, useInsertionEffect, useMemo, useRef } from 'react'
+import { Fragment, memo, useMemo, useRef } from 'react'
 
 import { useGateway } from '../app/gatewayContext.js'
 import type { AppLayoutProps } from '../app/interfaces.js'
@@ -304,7 +304,7 @@ const ComposerPane = memo(function ComposerPane({
                   onChange={composer.updateInput}
                   onPaste={composer.handleTextPaste}
                   onSubmit={composer.submit}
-                  placeholder={composer.empty ? PLACEHOLDER : ui.busy ? 'Control+C to interrupt…' : ''}
+                  placeholder={composer.empty ? PLACEHOLDER : ui.busy ? 'Ctrl+C to interrupt…' : ''}
                   value={composer.input}
                   voiceRecordKey={composer.voiceRecordKey}
                 />
@@ -390,47 +390,8 @@ export const AppLayout = memo(function AppLayout({
   // Inline mode skips AlternateScreen so the host terminal's native
   // scrollback captures rows scrolled off the top; composer + progress
   // stay anchored via normal flex-column flow.
-  // We still send SGR mouse tracking sequences so xterm.js forwards click
-  // events. Use 'buttons' preset (click + drag, no wheel/hover) — the
-  // scroll wheel falls through to the browser for transcript scrolling.
   const Shell = INLINE_MODE ? Fragment : AlternateScreen
   const shellProps = INLINE_MODE ? {} : { mouseTracking }
-
-  // In inline mode, AlternateScreen is not rendered but we still need to
-  // send the SGR sequences so the terminal (or xterm.js in the dashboard)
-  // forwards mouse button events. This effect mirrors what AlternateScreen
-  // does on mount/unmount/mode-change, but without the alt-screen entry.
-  //
-  // The escape sequences mirror @hermes/ink's termio/dec.ts:
-  //   buttons = DECSET 1000 (normal) + 1002 (button-motion) + 1006 (SGR)
-  useInsertionEffect(() => {
-    if (!INLINE_MODE || mouseTracking === 'off') return
-
-    // CSI ? N h = DECSET (set), CSI ? N l = DECRESET (reset)
-    const resetAll = '\x1b[?1006l\x1b[?1003l\x1b[?1002l\x1b[?1000l'
-    const enableButtons = resetAll + '\x1b[?1000h\x1b[?1002h\x1b[?1006h'
-    const enableAll = resetAll + '\x1b[?1000h\x1b[?1002h\x1b[?1003h\x1b[?1006h'
-    const enableWheel = resetAll + '\x1b[?1000h\x1b[?1006h'
-
-    const seq = mouseTracking === 'all' ? enableAll
-      : mouseTracking === 'buttons' ? enableButtons
-      : mouseTracking === 'wheel' ? enableWheel
-      : resetAll
-
-    try {
-      process.stdout.write(seq)
-    } catch {
-      // stdout may be closed during teardown — ignore.
-    }
-
-    return () => {
-      try {
-        process.stdout.write('\x1b[?1006l\x1b[?1003l\x1b[?1002l\x1b[?1000l')
-      } catch {
-        // ignore
-      }
-    }
-  }, [mouseTracking])
 
   return (
     <Shell {...shellProps}>

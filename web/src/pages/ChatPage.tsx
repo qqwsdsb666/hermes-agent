@@ -290,6 +290,12 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
       fontWeight: "400",
       fontWeightBold: "700",
       macOptionIsMeta: true,
+      // Hold Option (Alt on Linux/Windows) to force native text selection
+      // even when the inner Hermes TUI has enabled xterm mouse-events
+      // mode (CSI ?1000h family). Without this, click-and-drag in the
+      // chat canvas selects nothing and Cmd+C falls back to copying the
+      // entire visible buffer, which is rarely what the user wants.
+      // See #25720.
       macOptionClickForcesSelection: true,
       // Right-click selects the word under the pointer. xterm.js default
       // is false; enabling it gives users a single-action selection
@@ -360,6 +366,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
       // react to the keypress.
       // Paste: Cmd+Shift+V on macOS, Ctrl+Shift+V on others.
       const copyModifier = isMac ? ev.metaKey : ev.ctrlKey && ev.shiftKey;
+      const pasteModifier = isMac ? ev.metaKey : ev.ctrlKey && ev.shiftKey;
 
       if (copyModifier && ev.key.toLowerCase() === "c") {
         const sel = term.getSelection();
@@ -379,21 +386,8 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
         // (or the bare ev if the user used a different modifier).
       }
 
-      // Cmd+V paste: intercept keydown and use the Async Clipboard API.
-      // WKWebView consumes Cmd+V as a native menu action and never
-      // delivers it to xterm.js, so we must handle it ourselves.
-      // navigator.clipboard.readText() triggers a one-time permission
-      // dialog; after granting, the permission persists in the WebKit
-      // data store for all subsequent pastes.
-      const pasteModifier = isMac
-        ? ev.metaKey && !ev.altKey && !ev.ctrlKey
-        : ev.ctrlKey && ev.shiftKey;
-
       if (pasteModifier && ev.key.toLowerCase() === "v") {
         ev.stopPropagation();
-        // Read clipboard via the backend API (native pbpaste).
-        // Use synchronous XHR — WKWebView event handlers can lose
-        // the activation context across async fetch boundaries.
         try {
           const xhr = new XMLHttpRequest();
           xhr.open("GET", "/api/clipboard", false);
@@ -402,9 +396,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
             const data = JSON.parse(xhr.responseText);
             if (data.text) term.paste(data.text);
           }
-        } catch (_) {
-          // Silently ignore — clipboard read is best-effort
-        }
+        } catch (_) {}
         return false;
       }
 
@@ -423,7 +415,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
         return false;
       }
 
-      const step = Math.max(1, Math.round(Math.abs(delta) / 250));
+      const step = Math.max(1, Math.round(Math.abs(delta) / 50));
       term.scrollLines(delta > 0 ? step : -step);
 
       ev.preventDefault();
