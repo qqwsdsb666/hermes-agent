@@ -439,12 +439,10 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
 
     term.open(host);
 
-    // WebGL draws from a texture atlas sized with device pixels. On phones and
-    // in DevTools device mode that often produces *visually* much larger cells
-    // than `fontSize` suggests — users see "huge" text even at 7–9px settings.
-    // The canvas/DOM renderer tracks `fontSize` faithfully; use it for narrow
-    // hosts.  Wide layouts still get WebGL for crisp box-drawing.
-    const useWebgl = terminalTierWidthPx(host) >= 768;
+    // WKWebView's WebGL implementation has texture-atlas bugs that cause
+    // blank areas in the terminal scrollback.  Always use the Canvas
+    // renderer in the dashboard chat.
+    const useWebgl = false;
     if (useWebgl) {
       try {
         const webgl = new WebglAddon();
