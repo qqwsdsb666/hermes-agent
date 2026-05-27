@@ -2444,6 +2444,23 @@ async def cancel_oauth_session(session_id: str, request: Request):
 
 
 
+def _resolve_last_session() -> Optional[str]:
+    """Return the session ID of the most recent session, or None."""
+    try:
+        from hermes_state import SessionDB
+        db = SessionDB()
+        with db._lock:
+            cursor = db._conn.execute(
+                "SELECT id FROM sessions ORDER BY started_at DESC LIMIT 1"
+            )
+            row = cursor.fetchone()
+            if row:
+                return row["id"]
+    except Exception:
+        pass
+    return None
+
+
 def _session_latest_descendant(session_id: str):
     """Resolve a session id to the newest child leaf session.
 
@@ -3632,6 +3649,10 @@ async def pty_ws(ws: WebSocket) -> None:
 
     # --- spawn PTY ------------------------------------------------------
     resume = ws.query_params.get("resume") or None
+    # Auto-resume the most recent session when no explicit resume is given.
+    # This prevents losing conversation history on Desktop App restart.
+    if not resume:
+        resume = _resolve_last_session()
     channel = _channel_or_close_code(ws)
     sidecar_url = _build_sidecar_url(channel) if channel else None
 
