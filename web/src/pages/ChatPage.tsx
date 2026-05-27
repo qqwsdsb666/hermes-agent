@@ -439,10 +439,12 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
 
     term.open(host);
 
-    // WKWebView's WebGL implementation has texture-atlas bugs that cause
-    // blank areas in the terminal scrollback.  Always use the Canvas
-    // renderer in the dashboard chat.
-    const useWebgl = false;
+    // WebGL draws from a texture atlas sized with device pixels. On phones and
+    // in DevTools device mode that often produces *visually* much larger cells
+    // than `fontSize` suggests — users see "huge" text even at 7–9px settings.
+    // The canvas/DOM renderer tracks `fontSize` faithfully; use it for narrow
+    // hosts.  Wide layouts still get WebGL for crisp box-drawing.
+    const useWebgl = terminalTierWidthPx(host) >= 768;
     if (useWebgl) {
       try {
         const webgl = new WebglAddon();
@@ -502,14 +504,15 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
       }
       try {
         fit.fit();
-        // Always refresh the full viewport after fitting — otherwise
-        // the Canvas renderer may leave un-painted gaps between the
-        // terminal content and the composer bar.
-        if (term.rows > 0) {
-          term.refresh(0, term.rows - 1);
-        }
       } catch {
         return;
+      }
+      if (fontChanged && term.rows > 0) {
+        try {
+          term.refresh(0, term.rows - 1);
+        } catch {
+          /* ignore */
+        }
       }
       if (
         fontChanged &&
