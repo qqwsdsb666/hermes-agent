@@ -290,10 +290,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
       fontWeight: "400",
       fontWeightBold: "700",
       macOptionIsMeta: true,
-      // Browser-embedded chat runs with HERMES_TUI_DISABLE_MOUSE=1,
-      // so the TUI never enables xterm mouse tracking.  Plain
-      // click-and-drag text selection works without holding Option.
-      macOptionClickForcesSelection: false,
+      macOptionClickForcesSelection: true,
       // Right-click selects the word under the pointer. xterm.js default
       // is false; enabling it gives users a single-action selection
       // path on top of the modifier-based bypass above.
