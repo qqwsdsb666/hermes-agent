@@ -108,7 +108,7 @@ export function ApprovalPrompt({ onChoice, req, t }: ApprovalPromptProps) {
         </Text>
       ))}
 
-      <Text color={t.color.muted}>↑/↓ select · Enter confirm · 1-4 quick pick · Esc/Ctrl+C deny</Text>
+      <Text color={t.color.muted}>↑/↓ select · Enter confirm · 1-4 quick pick · Esc/Control+C deny</Text>
     </Box>
   )
 }
@@ -168,7 +168,7 @@ export function ClarifyPrompt({ cols = 80, onAnswer, onCancel, req, t }: Clarify
 
         <Text color={t.color.muted}>
           Enter send · Esc {choices.length ? 'back' : 'cancel'} ·{' '}
-          {isMac ? 'Cmd+C copy · Cmd+V paste · Ctrl+C cancel' : 'Ctrl+C cancel'}
+          {isMac ? 'Cmd+C copy · Cmd+V paste · Control+C cancel' : 'Control+C cancel'}
         </Text>
       </Box>
     )
@@ -187,7 +187,7 @@ export function ClarifyPrompt({ cols = 80, onAnswer, onCancel, req, t }: Clarify
         </Text>
       ))}
 
-      <Text color={t.color.muted}>↑/↓ select · Enter confirm · 1-{choices.length} quick pick · Esc/Ctrl+C cancel</Text>
+      <Text color={t.color.muted}>↑/↓ select · Enter confirm · 1-{choices.length} quick pick · Esc/Control+C cancel</Text>
     </Box>
   )
 }

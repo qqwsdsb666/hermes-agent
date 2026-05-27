@@ -1170,7 +1170,11 @@ export function TextInput({
 
         e.stopImmediatePropagation?.()
         clearSel()
-        const next = offsetAt(e)
+        // SGR mouse coordinates are 0-indexed from Ink after conversion.
+        // offsetAt returns the column of the cell under the click — a user
+        // clicking on a character expects the cursor AFTER that character,
+        // not ON it.  +1 clamped to value length gives that behaviour.
+        const next = Math.min(offsetAt(e) + 1, vRef.current.length)
         setCur(next)
         curRef.current = next
       }}

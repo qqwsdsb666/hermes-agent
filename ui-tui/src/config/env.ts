@@ -41,11 +41,23 @@ export const STARTUP_IMAGE = (process.env.HERMES_TUI_IMAGE ?? '').trim()
 // - On Termux the default is mouse off so touch selection isn't intercepted
 //   by terminal mouse protocols. Desktop defaults to 'all' to preserve prior
 //   behavior.
-const mouseTrackingOverride = parseToggle(process.env.HERMES_TUI_MOUSE_TRACKING)
+// HERMES_TUI_MOUSE_TRACKING can be a preset name ('buttons', 'wheel',
+// 'all', 'off') or a boolean-like value. Presets let the dashboard opt
+// into click-only ('buttons') so click-to-position works in the composer
+// without consuming scroll-wheel events for the web UI transcript.
+const rawMouseEnv = (process.env.HERMES_TUI_MOUSE_TRACKING ?? '').trim().toLowerCase()
+const MOUSE_PRESETS = new Set(['all', 'buttons', 'off', 'wheel'])
+const envMousePreset: MouseTrackingMode | null = MOUSE_PRESETS.has(rawMouseEnv)
+  ? (rawMouseEnv as MouseTrackingMode)
+  : null
+
+const mouseTrackingFromEnv: MouseTrackingMode | null =
+  envMousePreset ?? (parseToggle(process.env.HERMES_TUI_MOUSE_TRACKING) === true ? 'all' : null)
+
 const mouseTrackingDisabledLegacy = truthy(process.env.HERMES_TUI_DISABLE_MOUSE)
-const resolvedBootMouseEnabled =
-  mouseTrackingOverride ?? (TERMUX_TUI_MODE ? false : !mouseTrackingDisabledLegacy)
-export const MOUSE_TRACKING: MouseTrackingMode = resolvedBootMouseEnabled ? 'all' : 'off'
+const resolvedBootMouseTracking: MouseTrackingMode =
+  mouseTrackingFromEnv ?? (TERMUX_TUI_MODE ? 'off' : mouseTrackingDisabledLegacy ? 'off' : 'all')
+export const MOUSE_TRACKING: MouseTrackingMode = resolvedBootMouseTracking
 
 export const NO_CONFIRM_DESTRUCTIVE = truthy(process.env.HERMES_TUI_NO_CONFIRM)
 

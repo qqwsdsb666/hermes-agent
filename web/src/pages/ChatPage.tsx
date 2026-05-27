@@ -502,15 +502,14 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
       }
       try {
         fit.fit();
+        // Always refresh the full viewport after fitting — otherwise
+        // the Canvas renderer may leave un-painted gaps between the
+        // terminal content and the composer bar.
+        if (term.rows > 0) {
+          term.refresh(0, term.rows - 1);
+        }
       } catch {
         return;
-      }
-      if (fontChanged && term.rows > 0) {
-        try {
-          term.refresh(0, term.rows - 1);
-        } catch {
-          /* ignore */
-        }
       }
       if (
         fontChanged &&
